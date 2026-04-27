@@ -1,6 +1,11 @@
 import { execFileSync } from "node:child_process";
 import { chmodSync, existsSync } from "node:fs";
 
+if (process.env.CI === "true") {
+	console.log("Skipping Git hooks setup: running in CI.");
+	process.exit(0);
+}
+
 if (!existsSync(".git")) {
 	console.log("Skipping Git hooks setup: .git directory not found.");
 	process.exit(0);

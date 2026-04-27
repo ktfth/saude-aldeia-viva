@@ -46,6 +46,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          registry-url: https://registry.npmjs.org
+          scope: "@aldeia-viva"
 
       - name: Install dependencies
         run: npm ci
@@ -142,14 +144,16 @@ jobs:
           PACKAGE_NAME: ${{ steps.metadata.outputs.name }}
           PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
 
-      - name: Configure npm token fallback
+      - name: Configure npm authentication
         shell: bash
         run: |
           set -euo pipefail
           if [ -n "${NPM_TOKEN:-}" ]; then
+            echo "Using NPM_TOKEN from repository secrets."
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           else
-            echo "NPM_TOKEN is not set; npm trusted publishing/OIDC must be configured for this package."
+            echo "NPM_TOKEN is not set. npm publish will rely on Trusted Publishing/OIDC."
+            echo "If npm returns ENEEDAUTH, configure Trusted Publishing for ktfth/saude-aldia-viva or add NPM_TOKEN."
           fi
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -161,6 +165,8 @@ jobs:
             steps.npm_registry.outputs.exists == 'false'
           }}
         run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to JSR
         if: >-
@@ -173,6 +179,8 @@ jobs:
       - name: Manual npm dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run }}
         run: npm publish --access public --provenance --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Manual JSR dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_jsr && inputs.dry_run }}
@@ -187,6 +195,8 @@ jobs:
             steps.npm_registry.outputs.exists == 'false'
           }}
         run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Manual JSR publish
         if: >-
