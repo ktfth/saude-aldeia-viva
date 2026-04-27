@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+set -eu
+
+current_branch=$(git branch --show-current 2>/dev/null || true)
+
+if [ "$current_branch" != "main" ]; then
+  exit 0
+fi
+
+if [ "${SKIP_VERSION_BUMP:-}" = "1" ]; then
+  echo "pre-commit: SKIP_VERSION_BUMP=1 set; skipping automatic version bump."
+  exit 0
+fi
+
+if git diff --cached --quiet; then
+  exit 0
+fi
+
+current_version=$(node -p "require('./package.json').version")
+head_version=""
+
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+  head_package_json=$(git show HEAD:package.json 2>/dev/null || true)
+  if [ -n "$head_package_json" ]; then
+    head_version=$(printf '%s' "$head_package_json" | node -e "let data=''; process.stdin.on('data', c => data += c); process.stdin.on('end', () => console.log(JSON.parse(data).version ?? ''));")
+  fi
+fi
+
+if [ -n "$head_version" ] && [ "$current_version" != "$head_version" ]; then
+  echo "pre-commit: package version already changed ($head_version -> $current_version); not bumping again."
+  git add package.json package-lock.json jsr.json
+  exit 0
+fi
+
+echo "pre-commit: bumping patch version for main-branch publish."
+node scripts/bump-version.mjs patch
+git add package.json package-lock.json jsr.json

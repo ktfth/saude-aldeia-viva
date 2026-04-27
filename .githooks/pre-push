@@ -17,7 +17,7 @@ if [ "$should_check" != "true" ]; then
 fi
 
 if [ "${SKIP_VERSION_BUMP:-}" = "1" ]; then
-  echo "pre-push: SKIP_VERSION_BUMP=1 set; skipping automatic version bump."
+  echo "pre-push: SKIP_VERSION_BUMP=1 set; skipping version safety check."
   exit 0
 fi
 
@@ -31,9 +31,13 @@ if [ -n "$remote_main_sha" ] && [ "$remote_main_sha" != "$zero_sha" ]; then
   fi
 fi
 
-if [ -n "$remote_version" ] && [ "$current_version" != "$remote_version" ]; then
-  echo "pre-push: package version changed from remote main ($remote_version -> $current_version); allowing push."
-  exit 0
+if [ -n "$remote_version" ] && [ "$current_version" = "$remote_version" ]; then
+  echo "pre-push: refusing to push main without a version bump ($current_version)." >&2
+  echo "pre-push: commit normally on main so .githooks/pre-commit bumps the version, then push again." >&2
+  echo "pre-push: to bypass intentionally, run SKIP_VERSION_BUMP=1 git push origin main." >&2
+  exit 1
 fi
 
-node scripts/bump-version.mjs patch --pre-push
+if [ -n "$remote_version" ]; then
+  echo "pre-push: version changed from remote main ($remote_version -> $current_version); allowing push."
+fi

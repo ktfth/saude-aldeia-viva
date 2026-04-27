@@ -11,8 +11,10 @@ if (!existsSync(".git")) {
 	process.exit(0);
 }
 
-if (existsSync(".githooks/pre-push")) {
-	chmodSync(".githooks/pre-push", 0o755);
+for (const hookPath of [".githooks/pre-commit", ".githooks/pre-push"]) {
+	if (existsSync(hookPath)) {
+		chmodSync(hookPath, 0o755);
+	}
 }
 
 execFileSync("git", ["config", "core.hooksPath", ".githooks"], {

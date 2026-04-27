@@ -125,7 +125,32 @@
         }
       ],
       "trend": "stable"
+    },
+    "scripts\\bump-version.mjs": {
+      "latest": {
+        "commit": "7d57401",
+        "timestamp": "2026-04-27T23:41:05.312Z",
+        "mi": 46,
+        "cognitive": 2,
+        "nesting": 1,
+        "lines": 39,
+        "maxCyclomatic": 1,
+        "entropy": 4.2
+      },
+      "history": [
+        {
+          "commit": "7d57401",
+          "timestamp": "2026-04-27T23:41:05.312Z",
+          "mi": 46,
+          "cognitive": 2,
+          "nesting": 1,
+          "lines": 39,
+          "maxCyclomatic": 1,
+          "entropy": 4.2
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-04-27T23:29:16.778Z"
+  "capturedAt": "2026-04-27T23:41:10.318Z"
 }

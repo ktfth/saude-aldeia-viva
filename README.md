@@ -114,12 +114,11 @@ This repository includes `.github/workflows/publish.yml` to keep npm and JSR in 
 
 Main-branch flow:
 
-1. Install dependencies once with `npm install`; this configures `.githooks/pre-push` through `core.hooksPath`.
-2. When pushing to `main`, the pre-push hook compares the local package version with the remote `main` version.
-3. If the version was not changed yet, it bumps the patch version in `package.json`, `package-lock.json`, and `jsr.json`, then stops the push.
-4. Commit the bumped version files and push again; the hook detects the version change and allows the push.
-5. The workflow validates metadata, tests, build output, npm pack contents, and JSR dry-run contents.
-6. If the version is not already published, it publishes:
+1. Install dependencies once with `npm install`; this configures `.githooks` through `core.hooksPath`.
+2. Commit normally on `main`; `.githooks/pre-commit` bumps the patch version in `package.json`, `package-lock.json`, and `jsr.json` and stages those files into the same commit.
+3. Push to `main`; `.githooks/pre-push` only verifies that the local version differs from the remote `main` version. It no longer mutates files during push.
+4. The workflow validates metadata, tests, build output, npm pack contents, and JSR dry-run contents.
+5. If the version is not already published, it publishes:
    - npm: `@aldeia-viva/saude`
    - JSR: `@aldeia-viva/saude`
 
@@ -133,4 +132,4 @@ Registry authentication:
 
 Manual validation is available in GitHub Actions via `workflow_dispatch` with `dry_run: true`.
 
-To intentionally bypass the local version bump hook for a main push, use `SKIP_VERSION_BUMP=1 git push origin main`.
+To intentionally bypass the local version hooks, prefix the command with `SKIP_VERSION_BUMP=1`, for example `SKIP_VERSION_BUMP=1 git push origin main`.

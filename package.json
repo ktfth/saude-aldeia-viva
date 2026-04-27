@@ -1,6 +1,6 @@
 {
   "name": "@aldeia-viva/saude",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Type-first TypeScript client for the Epidemiology Intelligence API (saude.aldeia-viva.com.br).",
   "type": "module",
   "license": "MIT",
