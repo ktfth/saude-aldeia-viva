@@ -1,0 +1,25 @@
+{
+  "name": "@aldeia-viva/saude",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "imports": {
+    "zod": "npm:zod@^3.25.76"
+  },
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "examples/**/*.ts",
+      "README.md",
+      "LICENSE",
+      "package.json"
+    ],
+    "exclude": [
+      "src/**/*.test.ts",
+      "dist",
+      "dist-test",
+      "node_modules"
+    ]
+  }
+}

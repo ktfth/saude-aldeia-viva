@@ -1,0 +1,192 @@
+name: Publish package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate everything without publishing"
+        required: true
+        type: boolean
+        default: true
+      publish_npm:
+        description: "Publish to npm"
+        required: true
+        type: boolean
+        default: true
+      publish_jsr:
+        description: "Publish to JSR"
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Validate and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify package metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          JSR_NAME=$(node -p "require('./jsr.json').name")
+          JSR_VERSION=$(node -p "require('./jsr.json').version")
+
+          if [ "$PACKAGE_NAME" != "$JSR_NAME" ]; then
+            echo "package.json name ($PACKAGE_NAME) differs from jsr.json name ($JSR_NAME)." >&2
+            exit 1
+          fi
+
+          if [ "$PACKAGE_VERSION" != "$JSR_VERSION" ]; then
+            echo "package.json version ($PACKAGE_VERSION) differs from jsr.json version ($JSR_VERSION)." >&2
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "release" ] && [ "${{ github.event.release.tag_name }}" != "v$PACKAGE_VERSION" ]; then
+            echo "Release tag must be v$PACKAGE_VERSION, got ${{ github.event.release.tag_name }}." >&2
+            exit 1
+          fi
+
+          echo "name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      - name: Build npm package
+        run: npm run build
+
+      - name: Verify npm package contents
+        run: npm pack --dry-run
+
+      - name: Verify JSR package contents
+        run: npx jsr publish --dry-run
+
+      - name: Check npm registry version
+        id: npm_registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view "${{ steps.metadata.outputs.name }}@${{ steps.metadata.outputs.version }}" version --silent >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "npm version already exists; npm publish will be skipped."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check JSR registry version
+        id: jsr_registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          const name = process.env.PACKAGE_NAME;
+          const version = process.env.PACKAGE_VERSION;
+          const url = `https://jsr.io/${name}/meta.json`;
+          const response = await fetch(url);
+
+          if (response.status === 404) {
+            console.log('exists=false');
+            process.exit(0);
+          }
+
+          if (!response.ok) {
+            throw new Error(`Could not query JSR metadata: ${response.status} ${response.statusText}`);
+          }
+
+          const metadata = await response.json();
+          const versions = metadata.versions;
+          const exists = Array.isArray(versions)
+            ? versions.includes(version)
+            : Boolean(versions && Object.hasOwn(versions, version));
+          console.log(`exists=${exists ? 'true' : 'false'}`);
+          NODE
+        env:
+          PACKAGE_NAME: ${{ steps.metadata.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
+
+      - name: Configure npm token fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          else
+            echo "NPM_TOKEN is not set; npm trusted publishing/OIDC must be configured for this package."
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: >-
+          ${{
+            github.event_name == 'release' &&
+            steps.npm_registry.outputs.exists == 'false'
+          }}
+        run: npm publish --access public --provenance
+
+      - name: Publish to JSR
+        if: >-
+          ${{
+            github.event_name == 'release' &&
+            steps.jsr_registry.outputs.exists == 'false'
+          }}
+        run: npx jsr publish
+
+      - name: Manual npm dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run }}
+        run: npm publish --access public --provenance --dry-run
+
+      - name: Manual JSR dry-run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_jsr && inputs.dry_run }}
+        run: npx jsr publish --dry-run
+
+      - name: Manual npm publish
+        if: >-
+          ${{
+            github.event_name == 'workflow_dispatch' &&
+            inputs.publish_npm &&
+            !inputs.dry_run &&
+            steps.npm_registry.outputs.exists == 'false'
+          }}
+        run: npm publish --access public --provenance
+
+      - name: Manual JSR publish
+        if: >-
+          ${{
+            github.event_name == 'workflow_dispatch' &&
+            inputs.publish_jsr &&
+            !inputs.dry_run &&
+            steps.jsr_registry.outputs.exists == 'false'
+          }}
+        run: npx jsr publish

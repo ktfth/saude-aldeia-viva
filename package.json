@@ -1,0 +1,53 @@
+{
+  "name": "@aldeia-viva/saude",
+  "version": "0.1.0",
+  "description": "Type-first TypeScript client for the Epidemiology Intelligence API (saude.aldeia-viva.com.br).",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://saude.aldeia-viva.com.br/docs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aldeia-viva/saude-aldeia-viva.git"
+  },
+  "keywords": [
+    "epidemiology",
+    "datasus",
+    "sinan",
+    "sus",
+    "dengue",
+    "zika",
+    "chikungunya",
+    "typescript",
+    "zod",
+    "jsr"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "node scripts/clean-test.mjs && tsc -p tsconfig.test.json && node --test dist-test/client.test.js dist-test/schemas.test.js dist-test/tools.test.js"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
