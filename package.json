@@ -7,7 +7,7 @@
   "homepage": "https://saude.aldeia-viva.com.br/docs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aldeia-viva/saude-aldeia-viva.git"
+    "url": "https://github.com/ktfth/saude-aldia-viva.git"
   },
   "keywords": [
     "epidemiology",
@@ -35,6 +35,8 @@
     "LICENSE"
   ],
   "scripts": {
+    "prepare": "node scripts/install-git-hooks.mjs",
+    "version:bump": "node scripts/bump-version.mjs patch",
     "clean": "node scripts/clean.mjs",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "check": "tsc -p tsconfig.json --noEmit",

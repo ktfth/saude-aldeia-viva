@@ -100,7 +100,32 @@
         }
       ],
       "trend": "stable"
+    },
+    "scripts\\install-git-hooks.mjs": {
+      "latest": {
+        "commit": "7a779de",
+        "timestamp": "2026-04-27T23:29:11.495Z",
+        "mi": 62.6,
+        "cognitive": 1,
+        "nesting": 1,
+        "lines": 11,
+        "maxCyclomatic": 1,
+        "entropy": 2.98
+      },
+      "history": [
+        {
+          "commit": "7a779de",
+          "timestamp": "2026-04-27T23:29:11.495Z",
+          "mi": 62.6,
+          "cognitive": 1,
+          "nesting": 1,
+          "lines": 11,
+          "maxCyclomatic": 1,
+          "entropy": 2.98
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-04-27T22:37:02.255Z"
+  "capturedAt": "2026-04-27T23:29:16.778Z"
 }

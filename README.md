@@ -110,17 +110,20 @@ The package expects a native Fetch API implementation. Node.js 18.17+, Deno, Bun
 
 ## Automated publishing
 
-This repository includes `.github/workflows/publish.yml` to keep npm and JSR in sync.
+This repository includes `.github/workflows/publish.yml` to keep npm and JSR in sync from `ktfth/saude-aldia-viva`.
 
-Release flow:
+Main-branch flow:
 
-1. Update the same version in `package.json` and `jsr.json`.
-2. Run `npm run check`, `npm test`, and `npm run build`.
-3. Create a GitHub Release tagged as `v<version>`, for example `v0.1.0`.
-4. The workflow validates metadata, tests, build output, npm pack contents, and JSR dry-run contents.
-5. If the version is not already published, it publishes:
+1. Install dependencies once with `npm install`; this configures `.githooks/pre-push` through `core.hooksPath`.
+2. When pushing to `main`, the pre-push hook compares the local package version with the remote `main` version.
+3. If the version was not changed yet, it bumps the patch version in `package.json`, `package-lock.json`, and `jsr.json`, then stops the push.
+4. Commit the bumped version files and push again; the hook detects the version change and allows the push.
+5. The workflow validates metadata, tests, build output, npm pack contents, and JSR dry-run contents.
+6. If the version is not already published, it publishes:
    - npm: `@aldeia-viva/saude`
    - JSR: `@aldeia-viva/saude`
+
+Release flow is also supported: create a GitHub Release tagged as `v<version>`, for example `v0.1.0`.
 
 Registry authentication:
 
@@ -129,3 +132,5 @@ Registry authentication:
 - JSR publishing uses GitHub Actions OIDC through `npx jsr publish`.
 
 Manual validation is available in GitHub Actions via `workflow_dispatch` with `dry_run: true`.
+
+To intentionally bypass the local version bump hook for a main push, use `SKIP_VERSION_BUMP=1 git push origin main`.

@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+set -eu
+
+should_check=false
+remote_main_sha=""
+zero_sha="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] || [ "$local_ref" = "refs/heads/main" ]; then
+    should_check=true
+    remote_main_sha="$remote_sha"
+  fi
+done
+
+if [ "$should_check" != "true" ]; then
+  exit 0
+fi
+
+if [ "${SKIP_VERSION_BUMP:-}" = "1" ]; then
+  echo "pre-push: SKIP_VERSION_BUMP=1 set; skipping automatic version bump."
+  exit 0
+fi
+
+current_version=$(node -p "require('./package.json').version")
+remote_version=""
+
+if [ -n "$remote_main_sha" ] && [ "$remote_main_sha" != "$zero_sha" ]; then
+  remote_package_json=$(git show "$remote_main_sha:package.json" 2>/dev/null || true)
+  if [ -n "$remote_package_json" ]; then
+    remote_version=$(printf '%s' "$remote_package_json" | node -e "let data=''; process.stdin.on('data', c => data += c); process.stdin.on('end', () => console.log(JSON.parse(data).version ?? ''));")
+  fi
+fi
+
+if [ -n "$remote_version" ] && [ "$current_version" != "$remote_version" ]; then
+  echo "pre-push: package version changed from remote main ($remote_version -> $current_version); allowing push."
+  exit 0
+fi
+
+node scripts/bump-version.mjs patch --pre-push

@@ -1,6 +1,8 @@
 name: Publish package
 
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -74,6 +76,11 @@ jobs:
             exit 1
           fi
 
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "Automatic push publishing only runs for refs/heads/main." >&2
+            exit 1
+          fi
+
           echo "name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
           echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
@@ -90,7 +97,7 @@ jobs:
         run: npm pack --dry-run
 
       - name: Verify JSR package contents
-        run: npx jsr publish --dry-run
+        run: npx jsr publish --dry-run --allow-dirty
 
       - name: Check npm registry version
         id: npm_registry
@@ -150,7 +157,7 @@ jobs:
       - name: Publish to npm
         if: >-
           ${{
-            github.event_name == 'release' &&
+            (github.event_name == 'release' || github.event_name == 'push') &&
             steps.npm_registry.outputs.exists == 'false'
           }}
         run: npm publish --access public --provenance
@@ -158,10 +165,10 @@ jobs:
       - name: Publish to JSR
         if: >-
           ${{
-            github.event_name == 'release' &&
+            (github.event_name == 'release' || github.event_name == 'push') &&
             steps.jsr_registry.outputs.exists == 'false'
           }}
-        run: npx jsr publish
+        run: npx jsr publish --allow-dirty
 
       - name: Manual npm dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run }}
@@ -169,7 +176,7 @@ jobs:
 
       - name: Manual JSR dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_jsr && inputs.dry_run }}
-        run: npx jsr publish --dry-run
+        run: npx jsr publish --dry-run --allow-dirty
 
       - name: Manual npm publish
         if: >-
@@ -189,4 +196,4 @@ jobs:
             !inputs.dry_run &&
             steps.jsr_registry.outputs.exists == 'false'
           }}
-        run: npx jsr publish
+        run: npx jsr publish --allow-dirty
