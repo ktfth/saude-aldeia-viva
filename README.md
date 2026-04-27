@@ -110,7 +110,7 @@ The package expects a native Fetch API implementation. Node.js 18.17+, Deno, Bun
 
 ## Automated publishing
 
-This repository includes `.github/workflows/publish.yml` to keep npm and JSR in sync from `ktfth/saude-aldia-viva`.
+This repository includes `.github/workflows/publish.yml` to keep npm and JSR in sync from `ktfth/saude-aldeia-viva`.
 
 Main-branch flow:
 

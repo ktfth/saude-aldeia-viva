@@ -1,13 +1,13 @@
 {
   "name": "@aldeia-viva/saude",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Type-first TypeScript client for the Epidemiology Intelligence API (saude.aldeia-viva.com.br).",
   "type": "module",
   "license": "MIT",
   "homepage": "https://saude.aldeia-viva.com.br/docs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ktfth/saude-aldia-viva.git"
+    "url": "git+https://github.com/ktfth/saude-aldeia-viva.git"
   },
   "keywords": [
     "epidemiology",

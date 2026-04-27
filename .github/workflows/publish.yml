@@ -153,7 +153,7 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           else
             echo "NPM_TOKEN is not set. npm publish will rely on Trusted Publishing/OIDC."
-            echo "If npm returns ENEEDAUTH, configure Trusted Publishing for ktfth/saude-aldia-viva or add NPM_TOKEN."
+            echo "If npm returns ENEEDAUTH, configure Trusted Publishing for ktfth/saude-aldeia-viva or add NPM_TOKEN."
           fi
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
