@@ -46,7 +46,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for Trusted Publishing
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
@@ -140,28 +142,43 @@ jobs:
           PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
 
       - name: Configure npm authentication
+        id: npm_auth
         shell: bash
         run: |
           set -euo pipefail
+          npm --version
           if [ -n "${NPM_TOKEN:-}" ]; then
             echo "Using NPM_TOKEN from repository secrets."
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
             echo "NPM_TOKEN is not set. npm publish will rely on Trusted Publishing/OIDC."
-            echo "If npm returns ENEEDAUTH, configure Trusted Publishing for ktfth/saude-aldeia-viva or add NPM_TOKEN."
+            echo "If npm returns ENEEDAUTH, configure Trusted Publishing for package 'saude-aldeia-viva' from ktfth/saude-aldeia-viva/.github/workflows/publish.yml or add NPM_TOKEN."
+            rm -f ~/.npmrc
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
           fi
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to npm
+      - name: Publish to npm with token
         if: >-
           ${{
             (github.event_name == 'release' || github.event_name == 'push') &&
-            steps.npm_registry.outputs.exists == 'false'
+            steps.npm_registry.outputs.exists == 'false' &&
+            steps.npm_auth.outputs.has_token == 'true'
           }}
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm with Trusted Publishing
+        if: >-
+          ${{
+            (github.event_name == 'release' || github.event_name == 'push') &&
+            steps.npm_registry.outputs.exists == 'false' &&
+            steps.npm_auth.outputs.has_token == 'false'
+          }}
+        run: npm publish --access public --provenance
 
       - name: Publish to JSR
         if: >-
@@ -171,27 +188,43 @@ jobs:
           }}
         run: npx jsr publish --allow-dirty
 
-      - name: Manual npm dry-run
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run }}
+      - name: Manual npm dry-run with token
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run && steps.npm_auth.outputs.has_token == 'true' }}
         run: npm publish --access public --provenance --dry-run
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Manual npm dry-run with Trusted Publishing
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_npm && inputs.dry_run && steps.npm_auth.outputs.has_token == 'false' }}
+        run: npm publish --access public --provenance --dry-run
 
       - name: Manual JSR dry-run
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_jsr && inputs.dry_run }}
         run: npx jsr publish --dry-run --allow-dirty
 
-      - name: Manual npm publish
+      - name: Manual npm publish with token
         if: >-
           ${{
             github.event_name == 'workflow_dispatch' &&
             inputs.publish_npm &&
             !inputs.dry_run &&
-            steps.npm_registry.outputs.exists == 'false'
+            steps.npm_registry.outputs.exists == 'false' &&
+            steps.npm_auth.outputs.has_token == 'true'
           }}
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Manual npm publish with Trusted Publishing
+        if: >-
+          ${{
+            github.event_name == 'workflow_dispatch' &&
+            inputs.publish_npm &&
+            !inputs.dry_run &&
+            steps.npm_registry.outputs.exists == 'false' &&
+            steps.npm_auth.outputs.has_token == 'false'
+          }}
+        run: npm publish --access public --provenance
 
       - name: Manual JSR publish
         if: >-
