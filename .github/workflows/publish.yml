@@ -44,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Show toolchain versions
@@ -148,7 +148,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm --version
+          NPM_VERSION=$(npm --version)
+          echo "npm version: ${NPM_VERSION}"
           if [ -n "${NPM_TOKEN:-}" ]; then
             echo "Using NPM_TOKEN from repository secrets."
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
