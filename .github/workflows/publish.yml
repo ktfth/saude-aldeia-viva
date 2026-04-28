@@ -47,7 +47,6 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
-          scope: "@aldeia-viva"
 
       - name: Install dependencies
         run: npm ci
@@ -58,15 +57,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          NPM_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           JSR_NAME=$(node -p "require('./jsr.json').name")
           JSR_VERSION=$(node -p "require('./jsr.json').version")
-
-          if [ "$PACKAGE_NAME" != "$JSR_NAME" ]; then
-            echo "package.json name ($PACKAGE_NAME) differs from jsr.json name ($JSR_NAME)." >&2
-            exit 1
-          fi
 
           if [ "$PACKAGE_VERSION" != "$JSR_VERSION" ]; then
             echo "package.json version ($PACKAGE_VERSION) differs from jsr.json version ($JSR_VERSION)." >&2
@@ -83,7 +77,8 @@ jobs:
             exit 1
           fi
 
-          echo "name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "npm_name=$NPM_NAME" >> "$GITHUB_OUTPUT"
+          echo "jsr_name=$JSR_NAME" >> "$GITHUB_OUTPUT"
           echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Type-check
@@ -106,7 +101,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if npm view "${{ steps.metadata.outputs.name }}@${{ steps.metadata.outputs.version }}" version --silent >/dev/null 2>&1; then
+          if npm view "${{ steps.metadata.outputs.npm_name }}@${{ steps.metadata.outputs.version }}" version --silent >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "npm version already exists; npm publish will be skipped."
           else
@@ -141,7 +136,7 @@ jobs:
           console.log(`exists=${exists ? 'true' : 'false'}`);
           NODE
         env:
-          PACKAGE_NAME: ${{ steps.metadata.outputs.name }}
+          PACKAGE_NAME: ${{ steps.metadata.outputs.jsr_name }}
           PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
 
       - name: Configure npm authentication

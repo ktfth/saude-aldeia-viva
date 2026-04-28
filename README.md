@@ -15,7 +15,7 @@ API base URL: https://saude.aldeia-viva.com.br
 ## Install
 
 ```bash
-npm install @aldeia-viva/saude zod
+npm install saude-aldeia-viva zod
 ```
 
 JSR:
@@ -27,7 +27,7 @@ deno add jsr:@aldeia-viva/saude
 ## Usage
 
 ```ts
-import { SaudeAldeiaClient } from "@aldeia-viva/saude";
+import { SaudeAldeiaClient } from "saude-aldeia-viva";
 
 const client = new SaudeAldeiaClient();
 
@@ -49,7 +49,7 @@ const alerts = await client.getHighAlerts({
 Answering: **"Quais cidades de SP estão em nível crítico de Dengue?"**
 
 ```ts
-import { SaudeAldeiaClient, getAgentTools } from "@aldeia-viva/saude";
+import { SaudeAldeiaClient, getAgentTools } from "saude-aldeia-viva";
 
 const client = new SaudeAldeiaClient();
 
@@ -119,7 +119,7 @@ Main-branch flow:
 3. Push to `main`; `.githooks/pre-push` only verifies that the local version differs from the remote `main` version. It no longer mutates files during push.
 4. The workflow validates metadata, tests, build output, npm pack contents, and JSR dry-run contents.
 5. If the version is not already published, it publishes:
-   - npm: `@aldeia-viva/saude`
+   - npm: `saude-aldeia-viva`
    - JSR: `@aldeia-viva/saude`
 
 Release flow is also supported: create a GitHub Release tagged as `v<version>`, for example `v0.1.0`.
